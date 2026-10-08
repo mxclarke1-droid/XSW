@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Santa Tracker — North Pole Tracking Network</title>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<style>
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+#status {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+
+    color: white;
+    background: rgba(0,0,0,0.82);
+
+    padding: 11px 16px;
+
+    border-radius: 5px;
+
+    font-size: 13px;
+
+    border-left: 3px solid #d51f26;
+
+    box-shadow:
+        0 3px 15px rgba(0,0,0,.5);
+}
+
+#titleBar {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 70px;
+
+    background:
+        linear-gradient(
+            rgba(2,8,14,.96),
+            rgba(2,8,14,.72)
+        );
+
+    border-bottom:
+        1px solid rgba(255,255,255,.16);
+
+    z-index: 8;
+
+    display: flex;
+
+    align-items: center;
+
+    padding-left: 25px;
+
+    pointer-events: none;
+}
+
+#logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#logoSanta {
+    font-size: 36px;
+}
+
+#logoTitle {
+    font-size: 19px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+#logoSub {
+    color: #91a7b7;
+    font-size: 9px;
+    letter-spacing: 2px;
+    margin-top: 4px;
+}
+
+#networkStatus {
+    position: absolute;
+
+    right: 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+
+    color: #b9d2df;
+}
+
+#networkLight {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #42ed68;
+
+    box-shadow:
+        0 0 10px #42ed68;
+}
+
+
+/* LEFT PANEL */
+
+#leftPanel {
+    position: absolute;
+
+    left: 15px;
+    top: 90px;
+
+    width: 275px;
+
+    z-index: 7;
+}
+
+.panel {
+    background:
+        rgba(3,10,17,.90);
+
+    border:
+        1px solid rgba(128,166,190,.30);
+
+    margin-bottom: 10px;
+
+    box-shadow:
+        0 6px 25px rgba(0,0,0,.45);
+
+    backdrop-filter: blur(5px);
+}
+
+.panelHeader {
+    padding: 10px 12px;
+
+    border-bottom:
+        1px solid rgba(255,255,255,.10);
+
+    color: #b9cedb;
+
+    font-size: 10px;
+
+    font-weight: bold;
+
+    letter-spacing: 1.5px;
+}
+
+.panelBody {
+    padding: 12px;
+}
+
+.dataRow {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 7px 0;
+
+    border-bottom:
+        1px solid rgba(255,255,255,.055);
+}
+
+.dataRow:last-child {
+    border-bottom: none;
+}
+
+.dataName {
+    color: #8096a5;
+    font-size: 10px;
+}
+
+.dataValue {
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: right;
+}
+
+.green {
+    color: #4df878;
+}
+
+.blue {
+    color: #6bc5ff;
+}
+
+.yellow {
+    color: #ffe46b;
+}
+
+
+/* BUTTONS */
+
+button {
+    cursor: pointer;
+
+    font-family: Arial, sans-serif;
+}
+
+#startButton {
+    width: 100%;
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 3px;
+
+    background: #b62026;
+
+    color: white;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+#startButton:hover {
+    background: #d32930;
+}
+
+#startButton.active {
+    background: #198846;
+}
+
+#stopButton,
+#settingsButton,
+#musicButton {
+    width: 100%;
+
+    padding: 9px;
+
+    margin-top: 7px;
+
+    border:
+        1px solid #344853;
+
+    border-radius: 3px;
+
+    background: #14212a;
+
+    color: #cbd9e0;
+
+    font-size: 10px;
+}
+
+#stopButton:hover,
+#settingsButton:hover,
+#musicButton:hover {
+    background: #1e303b;
+}
+
+
+/* RIGHT PANEL */
+
+#rightPanel {
+    position: absolute;
+
+    right: 15px;
+    top: 90px;
+
+    width: 260px;
+
+    z-index: 7;
+}
+
+.bigStatus {
+    text-align: center;
+
+    padding: 18px 10px;
+}
+
+#trackingStatus {
+    font-size: 16px;
+
+    font-weight: bold;
+
+    color: #ffe46b;
+
+    letter-spacing: 1px;
+}
+
+#modelStatus {
+    color: #9bb0bc;
+
+    font-size: 10px;
+
+    margin-top: 7px;
+}
+
+
+/* SIGNAL */
+
+.signalBars {
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 3px;
+
+    height: 18px;
+}
+
+.signalBars span {
+    width: 4px;
+
+    background: #42ed68;
+
+    border-radius: 1px;
+}
+
+.signalBars span:nth-child(1) {
+    height: 5px;
+}
+
+.signalBars span:nth-child(2) {
+    height: 8px;
+}
+
+.signalBars span:nth-child(3) {
+    height: 11px;
+}
+
+.signalBars span:nth-child(4) {
+    height: 14px;
+}
+
+.signalBars span:nth-child(5) {
+    height: 18px;
+}
+
+
+/* BOTTOM */
+
+#bottomBar {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    min-height: 48px;
+
+    background:
+        rgba(2,8,14,.94);
+
+    border-top:
+        1px solid rgba(255,255,255,.13);
+
+    z-index: 7;
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 5px 15px;
+
+    gap: 25px;
+}
+
+.bottomItem {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.bottomLabel {
+    color: #687e8d;
+
+    font-size: 7px;
+
+    letter-spacing: 1px;
+}
+
+.bottomValue {
+    color: #d9e5eb;
+
+    font-size: 10px;
+
+    font-weight: bold;
+}
+
+
+/* SETTINGS MODAL */
+
+#settingsModal {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0,0,0,.72);
+
+    z-index: 50;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+#settingsBox {
+    width: 340px;
+
+    background: #07111a;
+
+    border:
+        1px solid #3c5868;
+
+    padding: 20px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.8);
+}
+
+#settingsBox h2 {
+    margin-top: 0;
+
+    font-size: 18px;
+}
+
+.formLabel {
+    display: block;
+
+    color: #91a7b5;
+
+    font-size: 10px;
+
+    margin-top: 13px;
+
+    margin-bottom: 5px;
+}
+
+select,
+input {
+    width: 100%;
+
+    padding: 9px;
+
+    background: #111f29;
+
+    color: white;
+
+    border:
+        1px solid #344a57;
+
+    border-radius: 3px;
+}
+
+.modalButtons {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 18px;
+}
+
+#saveSettings,
+#closeSettings {
+    flex: 1;
+
+    padding: 10px;
+
+    border: none;
+
+    border-radius: 3px;
+
+    color: white;
+}
+
+#saveSettings {
+    background: #188846;
+}
+
+#closeSettings {
+    background: #263640;
+}
+
+
+@media(max-width:800px) {
+
+    #leftPanel {
+        width: 230px;
+    }
+
+    #rightPanel {
+        width: 210px;
+    }
+
+    #logoSub {
+        display: none;
+    }
+
+    #logoTitle {
+        font-size: 14px;
+    }
+
+    #networkStatus {
+        display: none;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div id="status">
+    LOADING EARTH...
+</div>
+
+
+<div id="titleBar">
+
+    <div id="logo">
+
+        <div id="logoSanta">
+            🎅
+        </div>
+
+        <div>
+
+            <div id="logoTitle">
+                SANTA TRACKER
+            </div>
+
+            <div id="logoSub">
+                NORTH POLE TRACKING NETWORK
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div id="networkStatus">
+
+        <div id="networkLight"></div>
+
+        TRACKING NETWORK ONLINE
+
+    </div>
+
+</div>
+
+
+<!-- LEFT -->
+
+<div id="leftPanel">
+
+
+    <div class="panel">
+
+        <div class="panelHeader">
+            CURRENT TRACKING DATA
+        </div>
+
+        <div class="panelBody">
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    LOCATION
+                </span>
+
+                <span
+                    class="dataValue"
+                    id="locationValue"
+                >
+                    NORTH POLE
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    DESTINATION
+                </span>
+
+                <span
+                    class="dataValue"
+                    id="destinationValue"
+                >
+                    STANDING BY
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    SPEED
+                </span>
+
+                <span class="dataValue blue">
+                    1,850 MPH
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    ALTITUDE
+                </span>
+
+                <span class="dataValue">
+                    32,000 FT
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    REINDEER
+                </span>
+
+                <span class="dataValue green">
+                    9 DETECTED
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    FLIGHT
+                </span>
+
+                <span
+                    class="dataValue yellow"
+                    id="flightStatus"
+                >
+                    STANDING BY
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div class="panelHeader">
+            TRACKING NETWORK
+        </div>
+
+        <div class="panelBody">
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    SATELLITES
+                </span>
+
+                <span class="dataValue green">
+                    24 CONNECTED
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    CELL TOWERS
+                </span>
+
+                <span class="dataValue green">
+                    300+ ACTIVE
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    RADIO SIGNAL
+                </span>
+
+
+                <div class="signalBars">
+
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+
+                </div>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    TRACKING LINK
+                </span>
+
+                <span class="dataValue green">
+                    ACTIVE
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div class="panelBody">
+
+            <button id="startButton">
+                ▶ START TRACKING
+            </button>
+
+            <button id="stopButton">
+                ■ STOP TRACKING
+            </button>
+
+            <button id="settingsButton">
+                ⚙ PARENT SETTINGS
+            </button>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- RIGHT -->
+
+<div id="rightPanel">
+
+
+    <div class="panel">
+
+        <div class="panelHeader">
+            SANTA TRACKING
+        </div>
+
+        <div class="bigStatus">
+
+            <div id="trackingStatus">
+                STANDING BY
+            </div>
+
+            <div id="modelStatus">
+                LOADING SANTA...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div class="panelHeader">
+            NEXT ARRIVAL
+        </div>
+
+        <div class="panelBody">
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    HOME LOCATION
+                </span>
+
+                <span
+                    class="dataValue"
+                    id="homeLocation"
+                >
+                    NOT SET
+                </span>
+
+            </div>
+
+
+            <div class="dataRow">
+
+                <span class="dataName">
+                    EST. ARRIVAL
+                </span>
+
+                <span
+                    class="dataValue yellow"
+                    id="arrivalTime"
+                >
+                    NOT SET
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- BOTTOM -->
+
+<div id="bottomBar">
+
+
+    <div class="bottomItem">
+
+        <div class="bottomLabel">
+            SYSTEM
+        </div>
+
+        <div class="bottomValue">
+            NORTH POLE NETWORK
+        </div>
+
+    </div>
+
+
+    <div class="bottomItem">
+
+        <div class="bottomLabel">
+            LAST SIGNAL
+        </div>
+
+        <div
+            class="bottomValue"
+            id="lastSignal"
+        >
+            NORTH POLE
+        </div>
+
+    </div>
+
+
+    <div class="bottomItem">
+
+        <div class="bottomLabel">
+            UTC
+        </div>
+
+        <div
+            class="bottomValue"
+            id="utcClock"
+        >
+            --:--:--
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- SETTINGS -->
+
+<div id="settingsModal">
+
+
+    <div id="settingsBox">
+
+        <h2>
+            🎅 Parent Settings
+        </h2>
+
+
+        <label class="formLabel">
+            STATE / LOCATION
+        </label>
+
+
+        <select id="stateSelect">
+
+            <option value="">
+                Select your state
+            </option>
+
+            <option>Alabama</option>
+            <option>Alaska</option>
+            <option>Arizona</option>
+            <option>Arkansas</option>
+            <option>California</option>
+            <option>Colorado</option>
+            <option>Connecticut</option>
+            <option>Delaware</option>
+            <option>Florida</option>
+            <option>Georgia</option>
+            <option>Hawaii</option>
+            <option>Idaho</option>
+            <option>Illinois</option>
+            <option>Indiana</option>
+            <option>Iowa</option>
+            <option>Kansas</option>
+            <option>Kentucky</option>
+            <option>Louisiana</option>
+            <option>Maine</option>
+            <option>Maryland</option>
+            <option>Massachusetts</option>
+            <option>Michigan</option>
+            <option>Minnesota</option>
+            <option>Mississippi</option>
+            <option>Missouri</option>
+            <option>Montana</option>
+            <option>Nebraska</option>
+            <option>Nevada</option>
+            <option>New Hampshire</option>
+            <option>New Jersey</option>
+            <option>New Mexico</option>
+            <option>New York</option>
+            <option>North Carolina</option>
+            <option>North Dakota</option>
+            <option>Ohio</option>
+            <option>Oklahoma</option>
+            <option>Oregon</option>
+            <option>Pennsylvania</option>
+            <option>Rhode Island</option>
+            <option>South Carolina</option>
+            <option>South Dakota</option>
+            <option>Tennessee</option>
+            <option>Texas</option>
+            <option>Utah</option>
+            <option>Vermont</option>
+            <option>Virginia</option>
+            <option>Washington</option>
+            <option>West Virginia</option>
+            <option>Wisconsin</option>
+            <option>Wyoming</option>
+            <option>District of Columbia</option>
+
+        </select>
+
+
+        <label class="formLabel">
+            PREFERRED ARRIVAL TIME
+        </label>
+
+
+        <input
+            id="arrivalInput"
+            type="time"
+            value="22:00"
+        >
+
+
+        <div class="modalButtons">
+
+            <button id="saveSettings">
+                SAVE SETTINGS
+            </button>
+
+            <button id="closeSettings">
+                CANCEL
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<script>
+
+// =====================================================
+// SCENE
+// =====================================================
+
+const scene =
+    new THREE.Scene();
+
+
+// =====================================================
+// EARTH
+// =====================================================
+
+const EARTH_RADIUS = 2;
+
+const earthGeometry =
+    new THREE.SphereGeometry(
+        EARTH_RADIUS,
+        96,
+        96
+    );
+
+
+// =====================================================
+// EARTH TEXTURE
+// =====================================================
+
+const textureLoader =
+    new THREE.TextureLoader();
+
+const earthTexture =
+    textureLoader.load(
+
+        "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg",
+
+        function() {
+
+            document.getElementById(
+                "status"
+            ).innerHTML =
+                "REALISTIC EARTH ✓ — LOADING SANTA...";
+
+        }
+
+    );
+
+
+const earthMaterial =
+    new THREE.MeshPhongMaterial({
+
+        map: earthTexture,
+
+        shininess: 8,
+
+        specular:
+            new THREE.Color(
+                0x222222
+            )
+
+    });
+
+
+const earth =
+    new THREE.Mesh(
+        earthGeometry,
+        earthMaterial
+    );
+
+scene.add(earth);
+
+
+// =====================================================
+// ATMOSPHERE
+// =====================================================
+
+const atmosphereGeometry =
+    new THREE.SphereGeometry(
+        EARTH_RADIUS * 1.015,
+        96,
+        96
+    );
+
+
+const atmosphereMaterial =
+    new THREE.MeshBasicMaterial({
+
+        color: 0x4da6ff,
+
+        transparent: true,
+
+        opacity: 0.10,
+
+        side: THREE.BackSide
+
+    });
+
+
+const atmosphere =
+    new THREE.Mesh(
+        atmosphereGeometry,
+        atmosphereMaterial
+    );
+
+scene.add(atmosphere);
+
+
+// =====================================================
+// CAMERA
+// =====================================================
+
+const camera =
+    new THREE.PerspectiveCamera(
+
+        45,
+
+        window.innerWidth /
+        window.innerHeight,
+
+        0.1,
+
+        1000
+
+    );
+
+
+camera.position.set(
+    0,
+    3.8,
+    5.8
+);
+
+camera.lookAt(
+    0,
+    0,
+    0
+);
+
+
+// =====================================================
+// RENDERER
+// =====================================================
+
+const renderer =
+    new THREE.WebGLRenderer({
+
+        antialias: true
+
+    });
+
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+
+renderer.setPixelRatio(
+
+    Math.min(
+        window.devicePixelRatio,
+        2
+    )
+
+);
+
+
+renderer.outputEncoding =
+    THREE.sRGBEncoding;
+
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+// =====================================================
+// CONTROLS
+// =====================================================
+
+const controls =
+    new THREE.OrbitControls(
+
+        camera,
+
+        renderer.domElement
+
+    );
+
+
+controls.enableDamping =
+    true;
+
+controls.dampingFactor =
+    0.05;
+
+controls.minDistance =
+    3;
+
+controls.maxDistance =
+    10;
+
+controls.target.set(
+    0,
+    0,
+    0
+);
+
+
+// =====================================================
+// LIGHTING
+// =====================================================
+
+scene.add(
+
+    new THREE.AmbientLight(
+        0xffffff,
+        1.1
+    )
+
+);
+
+
+const sunLight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        2.2
+    );
+
+
+sunLight.position.set(
+    5,
+    5,
+    5
+);
+
+
+scene.add(
+    sunLight
+);
+
+
+// =====================================================
+// SANTA
+// =====================================================
+
+let santa = null;
+
+let santaReady = false;
+
+let santaTracking = false;
+
+
+// =====================================================
+// ROUTE
+// =====================================================
+
+const route = [
+
+    {
+        name: "NORTH POLE",
+        lat: 89.9,
+        lng: 0
+    },
+
+    {
+        name: "ANCHORAGE",
+        lat: 61.2181,
+        lng: -149.9003
+    },
+
+    {
+        name: "VANCOUVER",
+        lat: 49.2827,
+        lng: -123.1207
+    },
+
+    {
+        name: "SEATTLE",
+        lat: 47.6062,
+        lng: -122.3321
+    },
+
+    {
+        name: "SAN FRANCISCO",
+        lat: 37.7749,
+        lng: -122.4194
+    },
+
+    {
+        name: "LOS ANGELES",
+        lat: 34.0522,
+        lng: -118.2437
+    },
+
+    {
+        name: "MEXICO CITY",
+        lat: 19.4326,
+        lng: -99.1332
+    },
+
+    {
+        name: "PANAMA CITY",
+        lat: 8.9824,
+        lng: -79.5199
+    },
+
+    {
+        name: "LIMA",
+        lat: -12.0464,
+        lng: -77.0428
+    },
+
+    {
+        name: "SANTIAGO",
+        lat: -33.4489,
+        lng: -70.6693
+    },
+
+    {
+        name: "BUENOS AIRES",
+        lat: -34.6037,
+        lng: -58.3816
+    },
+
+    {
+        name: "SAO PAULO",
+        lat: -23.5505,
+        lng: -46.6333
+    },
+
+    {
+        name: "SANTO DOMINGO",
+        lat: 18.4861,
+        lng: -69.9312
+    },
+
+    {
+        name: "SAN JUAN",
+        lat: 18.4655,
+        lng: -66.1057
+    },
+
+    {
+        name: "MIAMI",
+        lat: 25.7617,
+        lng: -80.1918
+    },
+
+    {
+        name: "WASHINGTON DC",
+        lat: 38.9072,
+        lng: -77.0369
+    },
+
+    {
+        name: "NEW YORK",
+        lat: 40.7128,
+        lng: -74.0060
+    },
+
+    {
+        name: "LONDON",
+        lat: 51.5074,
+        lng: -0.1278
+    },
+
+    {
+        name: "PARIS",
+        lat: 48.8566,
+        lng: 2.3522
+    },
+
+    {
+        name: "ROME",
+        lat: 41.9028,
+        lng: 12.4964
+    },
+
+    {
+        name: "CAIRO",
+        lat: 30.0444,
+        lng: 31.2357
+    },
+
+    {
+        name: "DUBAI",
+        lat: 25.2048,
+        lng: 55.2708
+    },
+
+    {
+        name: "NEW DELHI",
+        lat: 28.6139,
+        lng: 77.2090
+    },
+
+    {
+        name: "BANGKOK",
+        lat: 13.7563,
+        lng: 100.5018
+    },
+
+    {
+        name: "SINGAPORE",
+        lat: 1.3521,
+        lng: 103.8198
+    },
+
+    {
+        name: "TOKYO",
+        lat: 35.6762,
+        lng: 139.6503
+    },
+
+    {
+        name: "SYDNEY",
+        lat: -33.8688,
+        lng: 151.2093
+    },
+
+    {
+        name: "AUCKLAND",
+        lat: -36.8509,
+        lng: 174.7645
+    },
+
+    {
+        name: "NORTH POLE",
+        lat: 89.9,
+        lng: 0
+    }
+
+];
+
+
+// =====================================================
+// LAT/LNG TO 3D POSITION
+// =====================================================
+
+function latLngToVector3(
+    lat,
+    lng,
+    radius
+) {
+
+    const phi =
+        (90 - lat) *
+        Math.PI /
+        180;
+
+    const theta =
+        (lng + 180) *
+        Math.PI /
+        180;
+
+    return new THREE.Vector3(
+
+        -radius *
+        Math.sin(phi) *
+        Math.cos(theta),
+
+        radius *
+        Math.cos(phi),
+
+        radius *
+        Math.sin(phi) *
+        Math.sin(theta)
+
+    );
+
+}
+
+
+// =====================================================
+// LOAD SANTA
+// =====================================================
+
+const loader =
+    new THREE.GLTFLoader();
+
+
+loader.load(
+
+    "santa(1).glb",
+
+
+    function(gltf) {
+
+        santa =
+            gltf.scene;
+
+
+        // ---------------------------------------------
+        // FIND MODEL SIZE
+        // ---------------------------------------------
+
+        const box =
+            new THREE.Box3()
+                .setFromObject(santa);
+
+
+        const size =
+            new THREE.Vector3();
+
+
+        box.getSize(size);
+
+
+        const biggestDimension =
+            Math.max(
+                size.x,
+                size.y,
+                size.z
+            );
+
+
+        const desiredSize =
+            0.40;
+
+
+        const scale =
+            desiredSize /
+            biggestDimension;
+
+
+        santa.scale.set(
+            scale,
+            scale,
+            scale
+        );
+
+
+        // ---------------------------------------------
+        // CENTER MODEL
+        // ---------------------------------------------
+
+        const centeredBox =
+            new THREE.Box3()
+                .setFromObject(santa);
+
+
+        const center =
+            centeredBox.getCenter(
+                new THREE.Vector3()
+            );
+
+
+        santa.position.sub(
+            center
+        );
+
+
+        // ---------------------------------------------
+        // ROTATION
+        // ---------------------------------------------
+
+        santa.rotation.y =
+            -Math.PI / 2;
+
+
+        // ---------------------------------------------
+        // START AT NORTH POLE
+        // ---------------------------------------------
+
+        const startPosition =
+            latLngToVector3(
+                route[0].lat,
+                route[0].lng,
+                EARTH_RADIUS + 0.25
+            );
+
+
+        santa.position.copy(
+            startPosition
+        );
+
+
+        // ---------------------------------------------
+        // ADD SANTA
+        // ---------------------------------------------
+
+        scene.add(
+            santa
+        );
+
+
+        santaReady = true;
+
+
+        document.getElementById(
+            "status"
+        ).innerHTML =
+            "REALISTIC EARTH ✓ — SANTA READY ✓";
+
+
+        document.getElementById(
+            "modelStatus"
+        ).innerHTML =
+            "🎅 SANTA SLEIGH DETECTED";
+
+
+    },
+
+
+    // ---------------------------------------------
+    // LOADING
+    // ---------------------------------------------
+
+    function(xhr) {
+
+        if (xhr.total) {
+
+            const percent =
+                Math.round(
+                    xhr.loaded /
+                    xhr.total *
+                    100
+                );
+
+
+            document.getElementById(
+                "status"
+            ).innerHTML =
+                "LOADING SANTA " +
+                percent +
+                "%";
+
+        }
+
+    },
+
+
+    // ---------------------------------------------
+    // ERROR
+    // ---------------------------------------------
+
+    function(error) {
+
+        console.error(
+            "Santa loading error:",
+            error
+        );
+
+
+        document.getElementById(
+            "status"
+        ).innerHTML =
+            "EARTH ✓ — SANTA FAILED TO LOAD";
+
+
+        document.getElementById(
+            "modelStatus"
+        ).innerHTML =
+            "⚠️ SANTA MODEL FAILED";
+
+
+    }
+
+);
+
+
+// =====================================================
+// FLIGHT VARIABLES
+// =====================================================
+
+let currentSegment = 0;
+
+let segmentStartTime = 0;
+
+const segmentDuration =
+    10000;
+
+
+// =====================================================
+// START TRACKING
+// =====================================================
+
+document.getElementById(
+    "startButton"
+).addEventListener(
+    "click",
+    function() {
+
+        if (!santaReady) {
+
+            document.getElementById(
+                "modelStatus"
+            ).innerHTML =
+                "⚠️ WAITING FOR SANTA MODEL";
+
+            return;
+
+        }
+
+
+        santaTracking = true;
+
+        currentSegment = 0;
+
+        segmentStartTime =
+            performance.now();
+
+
+        this.classList.add(
+            "active"
+        );
+
+
+        this.innerHTML =
+            "● TRACKING ACTIVE";
+
+
+        document.getElementById(
+            "trackingStatus"
+        ).innerHTML =
+            "TRACKING SANTA";
+
+
+        document.getElementById(
+            "trackingStatus"
+        ).style.color =
+            "#4df878";
+
+
+        document.getElementById(
+            "flightStatus"
+        ).innerHTML =
+            "IN FLIGHT";
+
+
+        document.getElementById(
+            "flightStatus"
+        ).className =
+            "dataValue green";
+
+    }
+);
+
+
+// =====================================================
+// STOP TRACKING
+// =====================================================
+
+document.getElementById(
+    "stopButton"
+).addEventListener(
+    "click",
+    function() {
+
+        santaTracking = false;
+
+
+        currentSegment = 0;
+
+
+        if (santa) {
+
+            const northPole =
+                latLngToVector3(
+                    89.9,
+                    0,
+                    EARTH_RADIUS + 0.25
+                );
+
+
+            santa.position.copy(
+                northPole
+            );
+
+        }
+
+
+        document.getElementById(
+            "startButton"
+        ).classList.remove(
+            "active"
+        );
+
+
+        document.getElementById(
+            "startButton"
+        ).innerHTML =
+            "▶ START TRACKING";
+
+
+        document.getElementById(
+            "trackingStatus"
+        ).innerHTML =
+            "STANDING BY";
+
+
+        document.getElementById(
+            "trackingStatus"
+        ).style.color =
+            "#ffe46b";
+
+
+        document.getElementById(
+            "flightStatus"
+        ).innerHTML =
+            "STANDING BY";
+
+
+        document.getElementById(
+            "flightStatus"
+        ).className =
+            "dataValue yellow";
+
+
+        document.getElementById(
+            "locationValue"
+        ).innerHTML =
+            "NORTH POLE";
+
+
+        document.getElementById(
+            "destinationValue"
+        ).innerHTML =
+            "STANDING BY";
+
+    }
+);
+
+
+// =====================================================
+// ANIMATE SANTA
+// =====================================================
+
+function updateSantaFlight(
+    now
+) {
+
+    if (
+        !santaTracking ||
+        !santa
+    ) {
+        return;
+    }
+
+
+    const elapsed =
+        now -
+        segmentStartTime;
+
+
+    let progress =
+        elapsed /
+        segmentDuration;
+
+
+    if (progress >= 1) {
+
+        progress = 0;
+
+        currentSegment++;
+
+
+        if (
+            currentSegment >=
+            route.length - 1
+        ) {
+
+            currentSegment = 0;
+
+        }
+
+
+        segmentStartTime =
+            now;
+
+    }
+
+
+    const start =
+        route[currentSegment];
+
+
+    const end =
+        route[
+            currentSegment + 1
+        ];
+
+
+    const startVector =
+        latLngToVector3(
+            start.lat,
+            start.lng,
+            EARTH_RADIUS + 0.25
+        );
+
+
+    const endVector =
+        latLngToVector3(
+            end.lat,
+            end.lng,
+            EARTH_RADIUS + 0.25
+        );
+
+
+    const position =
+        new THREE.Vector3();
+
+
+    position.lerpVectors(
+        startVector,
+        endVector,
+        progress
+    );
+
+
+    position.normalize()
+        .multiplyScalar(
+            EARTH_RADIUS + 0.25
+        );
+
+
+    santa.position.copy(
+        position
+    );
+
+
+    // ---------------------------------------------
+    // POINT SANTA IN FLIGHT DIRECTION
+    // ---------------------------------------------
+
+    const direction =
+        new THREE.Vector3()
+            .subVectors(
+                endVector,
+                startVector
+            )
+            .normalize();
+
+
+    const target =
+        santa.position
+            .clone()
+            .add(direction);
+
+
+    santa.lookAt(
+        target
+    );
+
+
+    // Keep sleigh orientation
+    santa.rotateY(
+        -Math.PI / 2
+    );
+
+
+    document.getElementById(
+        "locationValue"
+    ).innerHTML =
+        start.name;
+
+
+    document.getElementById(
+        "destinationValue"
+    ).innerHTML =
+        end.name;
+
+
+    document.getElementById(
+        "lastSignal"
+    ).innerHTML =
+        start.name;
+
+}
+
+
+// =====================================================
+// MAIN ANIMATION
+// =====================================================
+
+function animate(
+    now
+) {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    controls.update();
+
+
+    updateSantaFlight(
+        now
+    );
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+requestAnimationFrame(
+    animate
+);
+
+
+// =====================================================
+// UTC CLOCK
+// =====================================================
+
+function updateClock() {
+
+    const now =
+        new Date();
+
+
+    document.getElementById(
+        "utcClock"
+    ).innerHTML =
+
+        now.toISOString()
+            .substring(11,19)
+        +
+        " UTC";
+
+}
+
+
+setInterval(
+    updateClock,
+    1000
+);
+
+
+updateClock();
+
+
+// =====================================================
+// PARENT SETTINGS
+// =====================================================
+
+const settingsModal =
+    document.getElementById(
+        "settingsModal"
+    );
+
+
+document.getElementById(
+    "settingsButton"
+).addEventListener(
+    "click",
+    function() {
+
+        settingsModal.style.display =
+            "flex";
+
+    }
+);
+
+
+document.getElementById(
+    "closeSettings"
+).addEventListener(
+    "click",
+    function() {
+
+        settingsModal.style.display =
+            "none";
+
+    }
+);
+
+
+const arrivalTimes = {
+
+    "Alabama": "10:20 PM",
+    "Alaska": "9:40 PM",
+    "Arizona": "10:05 PM",
+    "Arkansas": "10:25 PM",
+    "California": "10:15 PM",
+    "Colorado": "10:30 PM",
+    "Connecticut": "11:30 PM",
+    "Delaware": "11:20 PM",
+    "Florida": "10:50 PM",
+    "Georgia": "10:45 PM",
+    "Hawaii": "9:30 PM",
+    "Idaho": "10:10 PM",
+    "Illinois": "10:45 PM",
+    "Indiana": "10:50 PM",
+    "Iowa": "10:40 PM",
+    "Kansas": "10:30 PM",
+    "Kentucky": "10:50 PM",
+    "Louisiana": "10:30 PM",
+    "Maine": "11:40 PM",
+    "Maryland": "11:20 PM",
+    "Massachusetts": "11:35 PM",
+    "Michigan": "11:05 PM",
+    "Minnesota": "10:45 PM",
+    "Mississippi": "10:30 PM",
+    "Missouri": "10:40 PM",
+    "Montana": "10:15 PM",
+    "Nebraska": "10:35 PM",
+    "Nevada": "10:10 PM",
+    "New Hampshire": "11:35 PM",
+    "New Jersey": "11:25 PM",
+    "New Mexico": "10:15 PM",
+    "New York": "11:25 PM",
+    "North Carolina": "11:05 PM",
+    "North Dakota": "10:25 PM",
+    "Ohio": "11:00 PM",
+    "Oklahoma": "10:25 PM",
+    "Oregon": "10:00 PM",
+    "Pennsylvania": "11:15 PM",
+    "Rhode Island": "11:35 PM",
+    "South Carolina": "11:00 PM",
+    "South Dakota": "10:30 PM",
+    "Tennessee": "10:40 PM",
+    "Texas": "10:20 PM",
+    "Utah": "10:15 PM",
+    "Vermont": "11:35 PM",
+    "Virginia": "11:15 PM",
+    "Washington": "10:00 PM",
+    "West Virginia": "11:10 PM",
+    "Wisconsin": "10:50 PM",
+    "Wyoming": "10:20 PM",
+    "District of Columbia": "11:20 PM"
+
+};
+
+
+document.getElementById(
+    "saveSettings"
+).addEventListener(
+    "click",
+    function() {
+
+        const state =
+            document.getElementById(
+                "stateSelect"
+            ).value;
+
+
+        const arrival =
+            document.getElementById(
+                "arrivalInput"
+            ).value;
+
+
+        if (!state) {
+
+            alert(
+                "Please select your state."
+            );
+
+            return;
+
+        }
+
+
+        localStorage.setItem(
+
+            "santaParentSettings",
+
+            JSON.stringify({
+
+                state:
+                    state,
+
+                arrival:
+                    arrival
+
+            })
+
+        );
+
+
+        document.getElementById(
+            "homeLocation"
+        ).innerHTML =
+            state.toUpperCase();
+
+
+        document.getElementById(
+            "arrivalTime"
+        ).innerHTML =
+            arrivalTimes[state] ||
+            arrival ||
+            "10:00 PM";
+
+
+        settingsModal.style.display =
+            "none";
+
+    }
+);
+
+
+// =====================================================
+// RESIZE
+// =====================================================
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
